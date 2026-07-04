@@ -83,7 +83,7 @@ python -m dinov3_hrdecoder_pipeline.inference.run_pipeline \
 
 **End-to-end pipeline — raw orthomosaic → GIS-ready GeoPackage:**
 
-![End-to-end pipeline: Input (COG → tile) → Model (DINOv3 encoder → HRDecoder → tile masks) → Output (stitch → evaluate → vectorise → GeoPackage)](docs/images/flow2.jpg)
+![End-to-end pipeline: Input (COG → tile) → Model (DINOv3 encoder → HRDecoder → tile masks) → Output (stitch → evaluate → vectorise → GeoPackage)](docs/images/flow2.png)
 
 **What it produces — a raw drone tile in, GIS-ready vector features out:**
 
@@ -95,7 +95,7 @@ python -m dinov3_hrdecoder_pipeline.inference.run_pipeline \
 
 **Model — DINOv3 ViT-L/16 encoder → HRDecoder → multi-term loss:**
 
-![Model architecture: input tile → DINOv3 ViT-L/16 encoder (partially frozen) → HR Decoder → logits → loss](docs/images/Architecture.jpg)
+![Model architecture: input tile → DINOv3 ViT-L/16 encoder (partially frozen) → HR Decoder → logits → loss](docs/images/Architecture.png)
 
 - **Encoder**: DINOv3 ViT-L/16 (~300 M params), pretrained on the
   satellite-imagery SAT-493M dataset. Multi-scale intermediate
