@@ -1,0 +1,136 @@
+# DINOv3 + HRDecoder Pipeline Configuration
+# ===========================================
+
+paths:
+  workspace: "/path/to/svamitva"
+  # Inputs from data_prep stage
+  tiles_dir:  "/path/to/svamitva/tiles"
+  tile_index: "/path/to/svamitva/tiles/tile_index.csv"
+  labels_dir: "/path/to/svamitva/masks"
+  # Outputs from training / inference
+  output_dir:     "/path/to/svamitva/outputs"
+  checkpoint_dir: "/path/to/svamitva/checkpoints"
+  vis_dir:        "/path/to/svamitva/visualizations"
+  log_dir:        "/path/to/svamitva/logs"
+
+# Label shapefiles — organised per-region ground truth (train only; test has none).
+# Re-running data_prep/prepare_masks rebuilds masks/ from these.
+label_sources:
+  - path: "/path/to/svamitva/dataset/train/labels/CG"
+    type: "shapefile"
+  - path: "/path/to/svamitva/dataset/train/labels/PB"
+    type: "shapefile"
+
+# Test image (excluded from training)
+test_dataset: "NAGUL_450171_MADASE_450172_GHOTPAL_450137_ORTHO"
+
+# Shapefile stem canonicalisation (raw stem → canonical stem).
+# Used by data_prep/prepare_masks.py when consolidating shapefile labels.
+feature_normalize:
+  Built_Up_Area_typ: Built_Up_Area_type
+  Utility_Poly_: Utility_Poly
+
+# Shapefile-stem → class-ID mapping (covers naming variants that
+# different label sources use). Same dict as data_prep.yaml.
+feature_classes:
+  Built_Up_Area_type: 1
+  Road: 2
+  Road_Centre_Line: 2
+  Water_Body: 3
+  Water_Body_Line: 3
+  Waterbody_Point: 3
+  Utility: 4
+  Utility_Poly: 4
+  Bridge: 5
+  Railway: 6
+
+# Feature classes
+classes:
+  - name: "Built_Up_Area"
+    id: 1
+    color: [255, 0, 0]
+  - name: "Road"
+    id: 2
+    color: [0, 255, 0]
+  - name: "Water_Body"
+    id: 3
+    color: [0, 0, 255]
+  - name: "Utility"
+    id: 4
+    color: [255, 255, 0]
+  - name: "Bridge"
+    id: 5
+    color: [255, 0, 255]
+  - name: "Railway"
+    id: 6
+    color: [0, 255, 255]
+
+# Model configuration
+model:
+  encoder:
+    name: "dinov3_vitl16"
+    arch: "vitl16"  # DINOv3 ViT-L/16 from local repo
+    embed_dim: 1024
+    patch_size: 16
+    intermediate_layers: [5, 11, 17, 23]  # 4 scales from ViT-L (24 blocks, 0-indexed)
+    freeze_encoder: false  # fine-tune
+    freeze_first_n_blocks: 12  # freeze first half for stability
+    pretrained: true
+    # Weight options:
+    #   "SAT493M"  - satellite-pretrained (recommended for remote sensing)
+    #   "LVD1689M" - general pretrained
+    #   "/path/to/weights.pth" or ".safetensors" - local file
+    # NOTE: Both Facebook CDN and HuggingFace require access approval.
+    #   Visit https://huggingface.co/facebook/dinov3-vitl16-pretrain-sat493m
+    #   to request access, then run: huggingface-cli login
+    weights: "SAT493M"
+
+  decoder:
+    # Decoder type: "hrdecoder", "upernet", "segformer", "skip"
+    type: "hrdecoder"  # recommended for ViT backbones
+    hidden_dim: 256
+
+    # --- HRDecoder-specific (only used when type=hrdecoder) ---
+    hr_crop_size: [256, 256]  # pixel-space crop size for HR pass
+    hr_loss_weight: 0.1
+    lr_loss_weight: 0.5
+    fuse_loss_weight: 1.0
+    crop_num: 2
+    scale_ratio: [0.75, 1.25]
+    divisible: 8
+
+    # --- UPerNet-specific (only used when type=upernet) ---
+    # pool_scales: [1, 2, 3, 6]
+
+    # --- SegFormer-specific (only used when type=segformer) ---
+    # embed_dim: 256
+    # dropout: 0.1
+
+# Training
+training:
+  tile_size: 1024  # must be divisible by patch_size=16 (512/16=32)
+  batch_size: 4
+  num_workers: 4
+  max_epochs: 50
+  learning_rate: 0.0001
+  encoder_lr_multiplier: 0.1  # lower LR for encoder fine-tuning
+  weight_decay: 1.0e-4
+  scheduler: "cosine"
+  warmup_epochs: 5
+  early_stopping_patience: 10
+  accumulate_grad_batches: 2
+  precision: "16-mixed"
+
+# Loss
+loss:
+  bce_weight: 0.5
+  dice_weight: 0.3
+  edge_weight: 0.2
+  edge_kernel_size: 3
+
+# Visualization
+visualization:
+  overlay_alpha: 0.4
+  dpi: 150
+  save_format: "png"
+  num_samples: 10  # samples per visualization stage

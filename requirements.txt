@@ -1,0 +1,45 @@
+# ────────────────────────────────────────────────────────────────────
+# Python dependencies for DINOv3 + HRDecoder segmentation pipeline.
+# GDAL must be installed via conda or the system package manager
+# (NOT pip) before installing rasterio / fiona.
+# ────────────────────────────────────────────────────────────────────
+
+# Geospatial
+rasterio>=1.3
+geopandas>=0.14
+fiona>=1.9
+shapely>=2.0
+pyproj>=3.6
+rio-cogeo>=5.0
+morecantile>=5.0
+
+# Deep Learning
+torch>=2.1
+torchvision>=0.16
+pytorch-lightning>=2.0
+timm>=0.9
+
+# DINOv3 weight loading (HuggingFace Hub)
+huggingface-hub>=0.20
+safetensors>=0.4
+
+# Visualization
+matplotlib>=3.8
+Pillow>=10.0
+
+# Numerical / utilities
+numpy>=1.24,<2
+scipy>=1.11
+scikit-image>=0.22
+scikit-learn>=1.3
+pandas>=2.0
+tqdm>=4.65
+pyyaml>=6.0
+tensorboard>=2.12
+
+# Web portal (FastAPI + TiTiler + SSE)
+fastapi>=0.110
+uvicorn[standard]>=0.27
+python-multipart>=0.0.9
+titiler.core>=0.18
+sse-starlette>=2.1

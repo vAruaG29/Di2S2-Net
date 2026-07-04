@@ -1,0 +1,108 @@
+# ============================================================
+# Data-preparation configuration
+# ============================================================
+# Paths use the placeholder root `/path/to/svamitva`. `setup_env.sh`
+# rewrites that placeholder to wherever you extracted the bundle, so you
+# never edit these by hand — just re-run setup after moving the bundle.
+#
+# NOTE: the distributed bundle ships the ALREADY-organised `dataset/`
+# (images + per-region label shapefiles) and pre-built `cog/`, so the
+# raw-input paths below point at `dataset/` too — the flat raw `data/`
+# folder is not distributed. Re-run the data_prep stage only if you are
+# rebuilding tiles/masks from scratch.
+
+paths:
+  workspace: /path/to/svamitva
+
+  # ── Inputs (images + label shapefiles, organised by split/region) ──
+  train_raw_dir: /path/to/svamitva/dataset/train/images
+  test_raw_dir:  /path/to/svamitva/dataset/test/images
+  shp_raw_cg:    /path/to/svamitva/dataset/train/labels/CG
+  shp_raw_pb:    /path/to/svamitva/dataset/train/labels/PB
+
+  # ── Organised dataset ──
+  dataset_dir:   /path/to/svamitva/dataset
+  train_dir:     /path/to/svamitva/dataset/train/images
+  test_dir:      /path/to/svamitva/dataset/test/images
+  shp_cg:        /path/to/svamitva/dataset/train/labels/CG
+  shp_pb:        /path/to/svamitva/dataset/train/labels/PB
+
+  # ── Downstream stage outputs ──
+  # COGs land here as cog/<split>/<basename>.tif and are symlinked
+  # into dataset/<split>/cog/<basename>.tif by convert_to_cog.py.
+  cog_dir:            /path/to/svamitva/cog
+  tiles_dir:          /path/to/svamitva/tiles
+  outputs_dir:        /path/to/svamitva/outputs
+  visualizations_dir: /path/to/svamitva/visualizations
+
+  # ── External code (cloned by setup_env.sh) ──
+  dinov3_repo: /path/to/svamitva/models/dinov3
+
+# CRS for all data
+crs: EPSG:3857
+
+# Raster file extensions to process
+raster_extensions:
+  - .tif
+  - .tiff
+  - .ecw
+
+# COG conversion settings
+cog:
+  compression: DEFLATE
+  blocksize: 512
+  overview_resampling: nearest
+
+# Tiling settings
+tiling:
+  tile_size: 1024       # pixels
+  overlap: 128          # pixels overlap between adjacent tiles
+  nodata_threshold: 0.5 # skip tiles with >50% nodata
+  output_format: GTiff
+
+# Feature class mapping (shapefile name -> class ID)
+feature_classes:
+  Built_Up_Area_type: 1  # Buildings (primary target)
+  Road: 2
+  Road_Centre_Line: 2
+  Water_Body: 3
+  Water_Body_Line: 3
+  Waterbody_Point: 3
+  Utility: 4
+  Utility_Poly: 4
+  Bridge: 5
+  Railway: 6
+
+# Shapefile stem canonicalisation (raw stem → canonical stem).
+# Applied by prepare_dataset.py before looking up feature_classes.
+feature_normalize:
+  Built_Up_Area_typ: Built_Up_Area_type
+  Utility_Poly_: Utility_Poly
+
+# Vectorization settings (used by predictions_to_gpkg.py)
+vectorization:
+  simplify_tolerance: 1.0   # metres
+  min_area: 5.0             # m² – polygons smaller than this are dropped
+  buffer_distance: 0.0      # optional smoothing buffer
+
+# Evaluation settings
+evaluation:
+  iou_threshold: 0.5
+  metrics: [iou, f1, precision, recall]
+
+# Visualization settings
+visualization:
+  thumbnail_max_width: 1000
+  dpi: 150
+  overlay_alpha: 0.4
+  class_colors:
+    Built_Up_Area_type: "#FF0000"  # Red
+    Road: "#FFFF00"                # Yellow
+    Road_Centre_Line: "#FFA500"    # Orange
+    Water_Body: "#0000FF"          # Blue
+    Water_Body_Line: "#00BFFF"     # Deep Sky Blue
+    Waterbody_Point: "#87CEEB"     # Light Blue
+    Utility: "#00FF00"             # Green
+    Utility_Poly: "#32CD32"        # Lime Green
+    Bridge: "#00FFFF"              # Cyan
+    Railway: "#FF00FF"             # Magenta

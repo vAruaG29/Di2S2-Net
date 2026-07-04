@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+html, body, #root {
+  height: 100%;
+  background: #151515;
+  color: #ebebeb;
+}
+
+/* Scrollbar polish for ES Dark */
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: #2a2a2a; }
+*::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+
+/* Indeterminate progress-bar animation used by LoadingBar. */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  50%  { transform: translateX(100%);  }
+  100% { transform: translateX(300%);  }
+}
+
+/* Square-ish range slider styled to ES accent */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  background: #2a2a2a;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px; height: 12px;
+  background: #ff5600;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+button:focus-visible {
+  outline: 1px solid #ff5600;
+  outline-offset: -1px;
+}
+
+/* MapLibre tweaks for the new dark surface */
+.maplibregl-popup-content {
+  background: #1a1a1a !important;
+  color: #ebebeb !important;
+  border: 1px solid #2a2a2a;
+  border-radius: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+.maplibregl-popup-tip { border-top-color: #1a1a1a !important; }
+.maplibregl-ctrl-attrib {
+  background: rgba(26, 26, 26, 0.7) !important;
+  color: #888888 !important;
+}
+.maplibregl-ctrl-attrib a { color: #ff5600 !important; }
