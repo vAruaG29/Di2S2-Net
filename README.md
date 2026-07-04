@@ -1,4 +1,4 @@
-# DINOv3 + HRDecoder Segmentation Pipeline 
+# Di2S2-Net: A Robust feature extraction tool for Svamitva drone Imgery
 
 ![The Di2S2-Net portal — swipe-comparing drone imagery (left) against model predictions (right): red = Built-Up Area, yellow = Road, blue = Water Body, green = Utility, over a village orthomosaic, with per-class layer toggles and feature counts](docs/images/portal.png)
 
