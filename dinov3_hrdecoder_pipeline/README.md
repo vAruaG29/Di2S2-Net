@@ -31,31 +31,7 @@ flag, the config keys it reads, and its inputs/outputs.
 
 ## The dataflow, end to end
 
-```
-data/{train,test}/*.{tif,ecw} + shapefiles          (raw INPUT, read-only)
-        │
-        │  data_prep/   (run once per data drop)
-        ▼
-  prepare_dataset → convert_to_cog → tile_raster → prepare_masks
-        │
-        ▼
-tiles/<ds>/*.tif + tiles/tile_index.csv             (1024² tiles + geo-metadata)
-masks/<ds>/*_mask.tif + masks/label_index.csv       (rasterised GT, class IDs 0–6)
-        │
-        │  training/   (train_full.py → submission model)
-        ▼
-pretrained/*.ckpt                                    (DINOv3 encoder + HRDecoder)
-        │
-        │  inference/run_pipeline.py  (infer → stitch → evaluate)
-        ▼
-outputs/predictions/<ds>/*_pred.tif
-outputs/stitched/<ds>_pred.tif
-outputs/evaluation/<ds>_metrics.csv + summary_report.csv
-        │
-        │  inference/batch_stitched_to_gpkg.py
-        ▼
-outputs/gpkg/<ds>_pred.gpkg                          (multi-layer, QGIS-styled)
-```
+![End-to-end dataflow: data prep (convert_to_cog, prepare_labels, tile_raster) → training phase (SegDataModule, DINOv3HRDecoderModule → best checkpoint) → inference phase (batch inference → prediction GeoTIFFs → stitched raster → evaluation report + GeoPackage)](../docs/images/Dataflow_end_to_end.png)
 
 Every stage reads its paths and hyper-parameters from a
 [`configs/`](configs/) YAML — nothing is hard-coded, so moving the bundle
@@ -97,4 +73,6 @@ See each sub-package README for the full stage-by-stage workflow, and the
 > pixels)**. Both score IoU ≈ 0 by data coverage, not model failure. The
 > 7-class head still reserves IDs 5/6, so adding labels later needs no
 > architecture change. Present-class (5-class) mIoU is **0.905** in-sample;
-> 7-class mIoU is **0.647**. See `../PRESENTATION_FINAL_CONTENT.md` Appendix E.
+> 7-class mIoU is **0.647**. Regenerate the class distribution with
+> [`scripts/analyze_dataset_stats.py`](../scripts/analyze_dataset_stats.py); the
+> full writeup is in [`docs/documentation.md`](../docs/documentation.md).

@@ -1,5 +1,9 @@
 # DINOv3 + HRDecoder Segmentation Pipeline 
 
+![The Di2S2-Net portal — swipe-comparing drone imagery (left) against model predictions (right): red = Built-Up Area, yellow = Road, blue = Water Body, green = Utility, over a village orthomosaic, with per-class layer toggles and feature counts](docs/images/portal.png)
+
+<p align="center"><em>The Di2S2-Net portal: browse pre-computed results or launch a fresh inference on a new orthomosaic, then swipe-compare imagery against the extracted features — live.</em></p>
+
 End-to-end pipeline for **tile-based semantic segmentation of aerial /
 satellite orthoimagery**, producing per-class raster masks and vector
 GeoPackages for six feature classes: Built_Up_Area, Road, Water_Body,
@@ -77,18 +81,23 @@ python -m dinov3_hrdecoder_pipeline.inference.run_pipeline \
 
 ## 1. Architecture
 
-```
-Raw orthomosaic
-   ↓  data preparation (organise → COG → tile → rasterise labels)
-1024×1024 tiles + ground-truth masks
-   ↓  DINOv3 ViT-L/16 encoder (layers 5, 11, 17, 23 → multi-scale features)
-   ↓  HRDecoder (LR full-image pass + HR cropped pass, fused)
-7-class logits (background + 6 feature classes)
-   ↓  CE + Dice + Sobel-edge loss  →  train
-   ↓  inference → stitch tiles into full extent → metrics → GeoPackage
-```
+**End-to-end pipeline — raw orthomosaic → GIS-ready GeoPackage:**
 
-- **Encoder**: DINOv3 ViT-L/16 (300 M params), pretrained on the
+![End-to-end pipeline: Input (COG → tile) → Model (DINOv3 encoder → HRDecoder → tile masks) → Output (stitch → evaluate → vectorise → GeoPackage)](docs/images/flow2.jpg)
+
+**What it produces — a raw drone tile in, GIS-ready vector features out:**
+
+| Input · raw drone orthomosaic | Output · extracted feature layers |
+|:---:|:---:|
+| ![Raw drone orthomosaic of a dense village with a pond](docs/images/sample_input.png) | ![Same area with vectorised predictions overlaid: red buildings, yellow roads, blue water body, green utility points](docs/images/sample_output.png) |
+
+<p align="center"><em>Built-Up Area (red) · Road (yellow) · Water Body (blue) · Utility (green) — vectorised polygons/lines/points, georeferenced and ready for QGIS/ArcGIS.</em></p>
+
+**Model — DINOv3 ViT-L/16 encoder → HRDecoder → multi-term loss:**
+
+![Model architecture: input tile → DINOv3 ViT-L/16 encoder (partially frozen) → HR Decoder → logits → loss](docs/images/Architecture.jpg)
+
+- **Encoder**: DINOv3 ViT-L/16 (~300 M params), pretrained on the
   satellite-imagery SAT-493M dataset. Multi-scale intermediate
   features at transformer blocks 5, 11, 17, 23.
 - **Decoder**: HRDecoder. Two-pass design — a low-resolution pass for
@@ -100,11 +109,13 @@ Raw orthomosaic
   with 5-epoch warm-up, encoder LR multiplier 0.1, grad-accumulation 2,
   batch size 4 (effective 8).
 
-See [`docs/model_architecture_diagram.png`](docs/model_architecture_diagram.png),
-[`docs/training_pipeline_flowchart.png`](docs/training_pipeline_flowchart.png), and
-[`docs/inference_pipeline_flowchart.png`](docs/inference_pipeline_flowchart.png).
-For the hackathon Q4–Q10 writeup, see
-[`docs/documentation.md`](docs/documentation.md).
+Component-level diagrams (encoder blocks, HRDecoder two-pass fusion, loss
+composition) are in
+[`dinov3_hrdecoder_pipeline/models/README.md`](dinov3_hrdecoder_pipeline/models/README.md);
+the training and inference flowcharts are in the
+[`training/`](dinov3_hrdecoder_pipeline/training/README.md) and
+[`inference/`](dinov3_hrdecoder_pipeline/inference/README.md) READMEs. For the
+hackathon Q4–Q10 writeup, see [`docs/documentation.md`](docs/documentation.md).
 
 ---
 
@@ -119,10 +130,6 @@ svamitva/                              ← repo root = workspace (after Drive me
 ├── requirements.txt                   ← pinned Python deps
 ├── setup_env.sh                       ← one-shot env installer
 ├── start_portal.sh                    ← launch the web portal (backend :8000 + frontend :5173)
-├── PRESENTATION_FINAL_CONTENT.md      ← code-verified slide content (numbers, hyper-params)
-├── SPEAKER_NOTES.md · SVAMITVA_HACKATHON.md   ← deck notes + mermaid diagram sources
-├── analyze_dataset_stats.py           ← class-distribution stats over the labelled corpus
-├── scripts_make_curves.py             ← regenerate presentation_figures/ training curves
 │
 ├── dataset/                           ← INPUT (images + labels, organized) — from Drive
 │   ├── train/
@@ -134,13 +141,17 @@ svamitva/                              ← repo root = workspace (after Drive me
 │   #  COG conversion is pre-done in cog/, so the flat raw data/ isn't shipped;
 │   #  point data-prep configs at dataset/ if you re-tile/re-train from scratch.
 │
-├── docs/                              ← architecture diagrams + hackathon writeup
-│   ├── documentation.md               ← Q4–Q10 hackathon writeup
-│   ├── model_architecture_diagram.png
-│   ├── training_pipeline_flowchart.png
-│   └── inference_pipeline_flowchart.png
+├── docs/                              ← all documentation, diagrams & figures
+│   ├── documentation.md               ← Q4–Q10 hackathon writeup + mermaid diagram sources
+│   ├── Di2S2-Net_Hackathon_Deck.pdf   ← the presentation deck
+│   ├── images/                        ← README diagrams (architecture, encoder/decoder/loss, portal, samples)
+│   └── figures/                       ← training-curve PNGs (regenerable via scripts/make_curves.py)
 │
-├── presentation_figures/              ← training-curve PNGs (regenerable)
+├── scripts/                           ← standalone utility scripts (see scripts/README.md)
+│   ├── analyze_dataset_stats.py       ← class-distribution stats over the labelled corpus
+│   ├── make_curves.py                 ← regenerate docs/figures/ training curves
+│   └── clean_unused_data.py           ← prune data/ files not referenced by dataset/
+│
 ├── pretrained/                        ← submission checkpoints (.ckpt from Drive; see pretrained/README.md)
 │
 ├── portal/                            ← FastAPI + React/MapLibre web demo (see portal/README.md)

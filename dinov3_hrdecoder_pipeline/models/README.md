@@ -4,16 +4,7 @@ The model itself. None of these files are CLI entrypoints — they are
 imported by `training/` and `inference/`. They read hyper-parameters from
 `configs/train.yaml` (the `model`, `loss`, `training`, `classes` sections).
 
-```
-image (B,3,1024,1024)
-   │  encoder.py — DINOv3 ViT-L/16, blocks [5,11,17,23] → 4 × (B,256,64,64)
-   ▼
-decoder.py — HRDecoder: multi-scale fusion → LR pass + HR pass → fuse
-   ▼
-logits (B,7,1024,1024)
-   │  losses.py — 0.5·CE + 0.3·Dice + 0.2·Edge, weighted over Fuse/LR/HR
-   ▼  metrics.py — confusion matrix → per-class IoU/F1/P/R + mIoU/OA
-```
+![Model overview: input tile 1024×1024×3 → DINOv3 ViT-L/16 encoder (features) → HR Decoder (logits) → Loss](../../docs/images/Architecture.jpg)
 
 | File | Role |
 |---|---|
@@ -28,6 +19,8 @@ logits (B,7,1024,1024)
 
 ## `encoder.py` — `DINOv3Encoder(nn.Module)`
 
+![Encoder: image → Patch Embed (16×16 patches → 64×64 tokens) → blocks 0-5 & 6-11 (frozen ❄) and 12-17 & 18-23 (fine-tuned 🔥); each of the 4 intermediate features (64×64×1024) passes a projection head LN→Linear(1024→256)→GELU](../../docs/images/encoder.jpg)
+
 Constructor: `arch="vitl16", intermediate_layers=[5,11,17,23],
 freeze_first_n_blocks=12, embed_dim=1024, out_dim=256, pretrained=True,
 weights="LVD1689M"` (the config passes `weights="SAT493M"`).
@@ -39,6 +32,8 @@ weights="LVD1689M"` (the config passes `weights="SAT493M"`).
 - `get_param_groups(encoder_lr_mult=0.1, base_lr=1e-4)` returns two groups: projections at `base_lr`, encoder at `base_lr × 0.1` (differential LR).
 
 ## `decoder.py` — `HRDecoder` + factory
+
+![HRDecoder: encoder projected features → Multi-Scale Fusion (concat 256×4 → conv 256) → LR pass (SegHead→logits, bilinear to target) and HR pass (random crops, SegHead→logits, paste back and average) → fused logits 1024×1024×7 → loss](../../docs/images/decoder.jpg)
 
 Building blocks: `ConvBNReLU`, `MultiScaleFusion` (concat 4×256 →
 `Conv1×1(1024→256)+BN+ReLU → Conv3×3(256→256)`), `SegHead`
@@ -62,6 +57,8 @@ what lets the portal sniff a checkpoint's decoder from its weight-key names
 and refuse incompatible ones.
 
 ## `losses.py` — `CombinedLoss`
+
+![Loss composition: Cross Entropy + Dice Loss + Edge Loss computed on the logits, combined multi-scale (LR + HR + Fuse) into the training loss](../../docs/images/loss.jpg)
 
 `total = 0.5·CE + 0.3·Dice + 0.2·Edge` (weights from `loss:` config), each
 returned in a dict `{loss, ce_loss, dice_loss, edge_loss}`.

@@ -5,6 +5,8 @@ masks → a memory-safe stitched raster → per-class metrics → a multi-layer
 GeoPackage. Also home to the timing hooks the portal parses for its live
 progress bar. Run from the **repo root** with `conda activate svamitva2`.
 
+![Inference pipeline: test orthomosaic → COG conversion → tiling → DINOv3 encoder → HRDecoder (LR+HR sliding-window test) → per-tile predictions → stitch tiles (memory-safe windowed write) → evaluate (if labels) and vectorise to a georeferenced GeoPackage](../../docs/images/Inference_pipeline.png)
+
 ```
 tiles/ + tiles/tile_index.csv          checkpoint (pretrained/*.ckpt)
         │

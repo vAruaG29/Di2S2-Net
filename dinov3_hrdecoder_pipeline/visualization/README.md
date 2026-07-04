@@ -29,6 +29,7 @@ There is **no `--config` flag** — config is hard-coded to
   so you can run `--stage predictions` right after inference without having
   run the others.
 
-Use these to produce the qualitative galleries referenced in
-`../../PRESENTATION_FINAL_CONTENT.md` (Slide 4). Training-curve figures are a
-separate script — `../../scripts_make_curves.py` → `presentation_figures/`.
+Use these to produce the qualitative galleries for the deck
+([`docs/documentation.md`](../../docs/documentation.md)). Training-curve figures
+are a separate script — [`scripts/make_curves.py`](../../scripts/make_curves.py)
+→ `docs/figures/`.

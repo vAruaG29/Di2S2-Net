@@ -5,6 +5,8 @@ and **which checkpoints are saved**; the architecture, loss, LR schedule and
 augmentation are identical (all defined in [`models/`](../models/)). Run
 from the **repo root** with `conda activate svamitva2`.
 
+![Training pipeline: raw drone orthomosaics → COG conversion → tiling; ground-truth shapefiles → label rasterization; tiles + masks feed the DINOv3 ViT-L/16 encoder + HRDecoder → combined loss (CE+Dice+Edge, multi-scale) → metrics → best checkpoint](../../docs/images/Training_pipeline.png)
+
 | Script | Validation hold-out | Early stopping | Saves | Output dirs |
 |---|---|---|---|---|
 | `train.py` | **1** village (`test_dataset`) | on `val/mIoU`, patience 10 | best mIoU (+`last`), best accuracy | `checkpoints/run_<ts>/`, `logs/run_<ts>/` |
